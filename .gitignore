@@ -174,3 +174,6 @@ pixi.lock
 # UV package manager (if still used)
 .uv/
 uv.lock
+
+# Temporary workspace scratch
+tmp/

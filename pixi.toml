@@ -31,7 +31,8 @@ einops = ">=0.8.0"
 equinox = ">=0.11.8"
 flatbuffers = ">=24.3.25"
 flax = "==0.10.2"
-fsspec = { version = ">=2024.6.0", extras = ["gcs"] }
+fsspec = ">=2024.6.0"
+gcsfs = ">=2024.6.0"
 gym-aloha = ">=0.1.1"
 imageio = ">=2.36.1"
 jaxtyping = "==0.2.36"
@@ -50,6 +51,8 @@ treescope = ">=0.1.7"
 transformers = "==4.53.2"
 rich = ">=14.0.0"
 polars = ">=1.30.0"
+mypy = ">=1.19.1, <2"
+ruff = ">=0.14.9, <0.15"
 
 # Development dependencies
 [feature.dev.pypi-dependencies]
