@@ -42,7 +42,25 @@ git clone --recurse-submodules git@github.com:Physical-Intelligence/openpi.git
 git submodule update --init --recursive
 ```
 
-We use [uv](https://docs.astral.sh/uv/) to manage Python dependencies. See the [uv installation instructions](https://docs.astral.sh/uv/getting-started/installation/) to set it up. Once uv is installed, run the following to set up the environment:
+### Recommended: Pixi (Conda-based)
+
+We recommend using [Pixi](https://pixi.sh) for environment management, which provides better CUDA/GPU support and more robust dependency resolution. See [PIXI_SETUP.md](PIXI_SETUP.md) for detailed documentation.
+
+```bash
+# Install pixi
+curl -fsSL https://pixi.sh/install.sh | bash
+
+# Install dependencies and setup project
+pixi install -e dev
+pixi run full-setup
+
+# For PyTorch models, apply transformers patches
+pixi run patch-transformers
+```
+
+### Alternative: UV
+
+We also support [uv](https://docs.astral.sh/uv/) for Python dependency management. See the [uv installation instructions](https://docs.astral.sh/uv/getting-started/installation/) to set it up. Once uv is installed, run the following to set up the environment:
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 uv sync
@@ -51,7 +69,7 @@ GIT_LFS_SKIP_SMUDGE=1 uv pip install -e .
 
 NOTE: `GIT_LFS_SKIP_SMUDGE=1` is needed to pull LeRobot as a dependency.
 
-**Docker**: As an alternative to uv installation, we provide instructions for installing openpi using Docker. If you encounter issues with your system setup, consider using Docker to simplify installation. See [Docker Setup](docs/docker.md) for more details.
+**Docker**: As an alternative to pixi or uv installation, we provide instructions for installing openpi using Docker. If you encounter issues with your system setup, consider using Docker to simplify installation. See [Docker Setup](docs/docker.md) for more details.
 
 
 

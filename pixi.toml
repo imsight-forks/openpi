@@ -1,0 +1,136 @@
+[workspace]
+name = "openpi"
+version = "0.1.0"
+description = "Physical Intelligence open source repo"
+authors = ["Physical Intelligence <noreply@physicalintelligence.company>"]
+channels = ["pytorch", "nvidia", "conda-forge"]
+platforms = ["linux-64"]
+homepage = "https://github.com/Physical-Intelligence/openpi"
+repository = "https://github.com/Physical-Intelligence/openpi"
+channel-priority = "disabled"
+
+[system-requirements]
+cuda = "12.0"
+
+# Core dependencies (conda packages)
+[dependencies]
+python = "3.11.*"
+pytorch = "2.7.*"
+pytorch-cuda = "12.1"
+numpy = ">=1.22.4,<2.0.0"
+
+# Core Python dependencies (via PyPI)
+[pypi-dependencies]
+# JAX with CUDA support
+jax = { version = "==0.5.3", extras = ["cuda12"] }
+# Other dependencies
+pillow = ">=11.0.0"
+augmax = ">=0.3.4"
+dm-tree = ">=0.1.8"
+einops = ">=0.8.0"
+equinox = ">=0.11.8"
+flatbuffers = ">=24.3.25"
+flax = "==0.10.2"
+fsspec = { version = ">=2024.6.0", extras = ["gcs"] }
+gym-aloha = ">=0.1.1"
+imageio = ">=2.36.1"
+jaxtyping = "==0.2.36"
+ml-collections = "==1.0.0"
+numpydantic = ">=1.6.6"
+opencv-python = ">=4.10.0.84"
+orbax-checkpoint = "==0.11.13"
+sentencepiece = ">=0.2.0"
+tqdm-loggable = ">=0.2"
+typing-extensions = ">=4.12.2"
+tyro = ">=0.9.5"
+wandb = ">=0.19.1"
+filelock = ">=3.16.1"
+beartype = "==0.19.0"
+treescope = ">=0.1.7"
+transformers = "==4.53.2"
+rich = ">=14.0.0"
+polars = ">=1.30.0"
+
+# Development dependencies
+[feature.dev.pypi-dependencies]
+pytest = ">=8.3.4"
+ruff = ">=0.8.6"
+pre-commit = ">=4.0.1"
+ipykernel = ">=6.29.5"
+ipywidgets = ">=8.1.5"
+matplotlib = ">=3.10.0"
+pynvml = ">=12.0.0"
+
+# RLDS dependencies (separate environment due to ml-dtypes conflict with JAX)
+[feature.rlds.dependencies]
+python = "3.11.*"
+pytorch = "2.7.*"
+pytorch-cuda = "12.1"
+numpy = ">=1.22.4,<2.0.0"
+
+[feature.rlds.pypi-dependencies]
+tensorflow = "==2.15.0"
+tensorflow-datasets = "==4.9.9"
+# Include minimal deps needed for RLDS (without JAX)
+dm-tree = ">=0.1.8"
+tqdm-loggable = ">=0.2"
+typing-extensions = ">=4.12.2"
+rich = ">=14.0.0"
+# Note: TensorFlow 2.15 requires ml-dtypes <0.3, incompatible with JAX 0.5.3
+
+# Define environments
+# Note: JAX and TensorFlow have incompatible ml-dtypes requirements, so rlds environment excludes JAX
+[environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+rlds = { features = ["rlds"], solve-group = "rlds", no-default-feature = true }
+full = { features = ["dev", "rlds"], solve-group = "full", no-default-feature = true }
+
+# Post-install tasks
+[tasks]
+# Installation tasks
+install = "pip install -e . --no-build-isolation --no-deps"
+install-workspace = { cmd = "pip install -e ./packages/openpi-client --no-build-isolation --no-deps", depends-on = ["install"] }
+install-lerobot = { cmd = "GIT_LFS_SKIP_SMUDGE=1 pip install --no-deps git+https://github.com/huggingface/lerobot@0cf864870cf29f4738d3ade893e6fd13fbd7cdb5", depends-on = ["install-workspace"] }
+install-dlimp = { cmd = "pip install --no-deps git+https://github.com/kvablack/dlimp@ad72ce3a9b414db2185bc0b38461d4101a65477a", depends-on = ["install-lerobot"] }
+setup = { depends-on = ["install", "install-workspace", "install-lerobot", "install-dlimp"] }
+
+# PyTorch transformers patches (required for PyTorch models)
+patch-transformers = "cp -r ./src/openpi/models_pytorch/transformers_replace/* .pixi/envs/default/lib/python3.11/site-packages/transformers/"
+
+# Testing
+test = "pytest"
+test-file = "pytest"
+
+# Linting and formatting
+lint = "ruff check ."
+lint-fix = "ruff check --fix ."
+format = "ruff format ."
+format-check = "ruff format --check ."
+
+# Pre-commit
+pre-commit-install = "pre-commit install"
+pre-commit-run = "pre-commit run --all-files"
+
+# Training
+compute-norm-stats = "python scripts/compute_norm_stats.py"
+train = "python scripts/train.py"
+train-pytorch = "python scripts/train_pytorch.py"
+
+# Inference
+serve-policy = "python scripts/serve_policy.py"
+
+# Complete setup workflow
+full-setup = { depends-on = ["setup", "pre-commit-install"] }
+
+[feature.dev.tasks]
+# Development-specific tasks
+dev-setup = { depends-on = ["full-setup"] }
+
+[feature.rlds.tasks]
+# RLDS-specific setup if needed
+rlds-setup = { cmd = "pip install dlimp --no-deps", depends-on = ["setup"] }
+
+# Activation hooks - set environment variables
+[activation]
+scripts = ["activation.sh"]
