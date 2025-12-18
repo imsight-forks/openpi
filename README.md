@@ -52,6 +52,9 @@ curl -fsSL https://pixi.sh/install.sh | bash
 
 # Install dependencies and setup project
 pixi install -e dev
+pixi run setup
+
+# Optional: also install pre-commit hooks
 pixi run full-setup
 
 # For PyTorch models, apply transformers patches
@@ -100,6 +103,19 @@ We also provide "expert" checkpoints for various robot platforms and tasks. Thes
 
 
 By default, checkpoints are automatically downloaded from `gs://openpi-assets` and are cached in `~/.cache/openpi` when needed. You can overwrite the download path by setting the `OPENPI_DATA_HOME` environment variable.
+
+## Quick inference (no robot)
+
+Use `OPENPI_DATA_HOME` to point at a local cache directory (either the default `~/.cache/openpi` or a custom path that
+already contains downloaded checkpoints).
+
+```bash
+export OPENPI_DATA_HOME=/path/to/openpi_cache
+pixi run -e dev python scripts/infer_smoke_test.py \\
+  --config pi0_fast_droid \\
+  --checkpoint gs://openpi-assets/checkpoints/pi0_fast_droid \\
+  --out-dir tmp/openpi_infer_smoke/pi0_fast_droid
+```
 
 
 

@@ -3,6 +3,15 @@
 This folder contains helper scripts to download the public OpenPI checkpoints into a local cache directory using the
 project Pixi environment.
 
+## Environment
+
+These scripts assume you’re running inside the Pixi `dev` environment.
+
+```bash
+pixi install -e dev
+pixi run setup
+```
+
 ## Quick start (tmux)
 
 ```bash
@@ -47,10 +56,10 @@ exists on disk, OpenPI will use it without downloading.
 
 ### Recommended: centralized cache
 
-If you copied the checkpoints to `/data2/llm-models/openpi`:
+If you copied the checkpoints to a centralized cache directory:
 
 ```bash
-export OPENPI_DATA_HOME=/data2/llm-models/openpi
+export OPENPI_DATA_HOME=/path/to/openpi_cache
 ```
 
 Expected layout:
@@ -60,7 +69,7 @@ Expected layout:
 ### Example: load + run a single inference
 
 ```bash
-export OPENPI_DATA_HOME=/data2/llm-models/openpi
+export OPENPI_DATA_HOME=/path/to/openpi_cache
 pixi run -e dev python scripts/infer_smoke_test.py \\
   --config pi0_fast_droid \\
   --checkpoint gs://openpi-assets/checkpoints/pi0_fast_droid \\
@@ -70,7 +79,7 @@ pixi run -e dev python scripts/infer_smoke_test.py \\
 ### Example: serve a policy using local cache
 
 ```bash
-export OPENPI_DATA_HOME=/data2/llm-models/openpi
+export OPENPI_DATA_HOME=/path/to/openpi_cache
 pixi run -e dev python scripts/serve_policy.py \\
   --policy.config pi0_fast_droid \\
   --policy.dir gs://openpi-assets/checkpoints/pi0_fast_droid \\
