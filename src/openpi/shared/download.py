@@ -20,6 +20,19 @@ DEFAULT_CACHE_DIR = "~/.cache/openpi"
 
 logger = logging.getLogger(__name__)
 
+_PROXY_ENV_KEYS = (
+    "http_proxy",
+    "https_proxy",
+    "all_proxy",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "ALL_PROXY",
+)
+
+
+def _proxy_env_present() -> bool:
+    return any(os.getenv(k) for k in _PROXY_ENV_KEYS)
+
 
 def get_cache_dir() -> pathlib.Path:
     cache_dir = pathlib.Path(os.getenv(_OPENPI_DATA_HOME, DEFAULT_CACHE_DIR)).expanduser().resolve()
@@ -83,6 +96,14 @@ def maybe_download(url: str, *, force_download: bool = False, **kwargs) -> pathl
             # Download the data to a local cache.
             logger.info(f"Downloading {url} to {local_path}")
             scratch_path = local_path.with_suffix(".partial")
+            # gcsfs uses aiohttp; it only honors *_proxy env vars when trust_env=True.
+            if parsed.scheme == "gs" and _proxy_env_present():
+                if "gs" in kwargs and isinstance(kwargs["gs"], dict):
+                    gs_kwargs = dict(kwargs["gs"])
+                    gs_kwargs.setdefault("session_kwargs", {"trust_env": True})
+                    kwargs["gs"] = gs_kwargs
+                else:
+                    kwargs.setdefault("session_kwargs", {"trust_env": True})
             _download_fsspec(url, scratch_path, **kwargs)
 
             shutil.move(scratch_path, local_path)
@@ -107,13 +128,17 @@ def _download_fsspec(url: str, local_path: pathlib.Path, **kwargs) -> None:
         total_size = fs.du(url)
     else:
         total_size = info["size"]
-    with tqdm.tqdm(total=total_size, unit="iB", unit_scale=True, unit_divisor=1024) as pbar:
-        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    with (
+        tqdm.tqdm(total=total_size, unit="iB", unit_scale=True, unit_divisor=1024) as pbar,
+        concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor,
+    ):
         future = executor.submit(fs.get, url, local_path, recursive=is_dir)
         while not future.done():
             current_size = sum(f.stat().st_size for f in [*local_path.rglob("*"), local_path] if f.is_file())
             pbar.update(current_size - pbar.n)
             time.sleep(1)
+        # Propagate fs.get failures; otherwise corrupted partial downloads may be treated as success.
+        future.result()
         pbar.update(total_size - pbar.n)
 
 
